@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+psycopg2-binary
+python-dotenv
+pydantic-settings
+python-multipart
+openai
+httpx
+bcrypt
+python-jose[cryptography]
+pydantic[email]
+pymupdf
+sentence-transformers
+chromadb

@@ -1,0 +1,19 @@
+from enum import Enum
+
+
+class DocumentStatus(str, Enum):
+    UPLOADED = "UPLOADED"
+    PROCESSING = "PROCESSING"
+    PROCESSED = "PROCESSED"
+    FAILED = "FAILED"
+
+
+class DocumentType(str, Enum):
+    SOP = "SOP"
+    MANUAL = "MANUAL"
+    INCIDENT_REPORT = "INCIDENT_REPORT"
+    MAINTENANCE_REPORT = "MAINTENANCE_REPORT"
+    INSPECTION_REPORT = "INSPECTION_REPORT"
+    WORK_ORDER = "WORK_ORDER"
+    SAFETY_POLICY = "SAFETY_POLICY"
+    OTHER = "OTHER"
