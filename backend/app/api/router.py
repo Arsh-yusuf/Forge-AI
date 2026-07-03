@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import health,auth,users,documents,search,chat
+from app.api.v1 import health,auth,users,documents,search,chat,dashboard
 
 api_router = APIRouter()
 
@@ -14,6 +14,7 @@ api_router.include_router(users.router)
 api_router.include_router(documents.router)
 api_router.include_router(search.router)
 api_router.include_router(chat.router)
+api_router.include_router(dashboard.router)
 
 
 

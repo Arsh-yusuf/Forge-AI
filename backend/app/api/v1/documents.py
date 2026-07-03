@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, UploadFile,HTTPException
 from sqlalchemy.orm import Session
 from app.services.document_service import DocumentService
 from app.schemas.document import DocumentListResponse
@@ -18,21 +18,6 @@ router = APIRouter(
     "/upload",
     response_model=DocumentUploadResponse,
 )
-
-@router.get(
-    "",
-    response_model=DocumentListResponse,
-)
-
-def list_documents(
-    db: Session = Depends(get_db),
-):
-
-    documents = DocumentService.get_all_documents(db)
-
-    return {
-        "documents": documents
-    }
 
 
 def upload_document(
@@ -56,4 +41,41 @@ def upload_document(
         "status": document.status,
         "uploaded_at": document.uploaded_at,
         "message": "Document uploaded successfully.",
+    }
+
+@router.get(
+    "",
+    response_model=DocumentListResponse,
+)
+
+def list_documents(
+    db: Session = Depends(get_db),
+):
+
+    documents = DocumentService.get_all_documents(db)
+
+    return {
+        "documents": documents
+    }
+
+@router.delete("/{document_id}")
+def delete_document(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+
+    deleted = DocumentService.delete_document(
+        db,
+        document_id,
+    )
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found",
+        )
+
+    return {
+        "message": "Document deleted successfully."
     }
