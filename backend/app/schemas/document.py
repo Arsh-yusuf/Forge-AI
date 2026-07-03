@@ -1,7 +1,5 @@
 from datetime import datetime
-
-from pydantic import BaseModel
-
+from pydantic import BaseModel,ConfigDict
 from app.core.constants import DocumentStatus, DocumentType
 
 
@@ -15,3 +13,14 @@ class DocumentUploadResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class DocumentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    original_filename: str
+    uploaded_at: datetime
+
+
+class DocumentListResponse(BaseModel):
+    documents: list[DocumentResponse]

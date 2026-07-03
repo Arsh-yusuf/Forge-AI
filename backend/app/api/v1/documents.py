@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
-
+from app.services.document_service import DocumentService
+from app.schemas.document import DocumentListResponse
 from app.core.constants import DocumentType
 from app.core.security import get_current_user
 from app.database.session import get_db
@@ -17,6 +18,23 @@ router = APIRouter(
     "/upload",
     response_model=DocumentUploadResponse,
 )
+
+@router.get(
+    "",
+    response_model=DocumentListResponse,
+)
+
+def list_documents(
+    db: Session = Depends(get_db),
+):
+
+    documents = DocumentService.get_all_documents(db)
+
+    return {
+        "documents": documents
+    }
+
+
 def upload_document(
     document_type: DocumentType = Form(...),
     file: UploadFile = File(...),
