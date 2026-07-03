@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
-
+from app.llm.query_rewriter import QueryRewriter
 from app.llm.prompt_builder import build_prompt
 from app.llm.prompts import SYSTEM_PROMPT
-
 from app.services.conversation_service import ConversationService
 from app.services.llm_service import LLMService
 from app.services.retriever_service import RetrieverService
@@ -28,8 +27,17 @@ class ChatService:
             session_id,
         )
 
-        chunks = RetrieverService.search(
+        search_query=QueryRewriter.rewrite(
+            history,
             question,
+        )
+        print("=" * 60)
+        print("Original Question :", question)
+        print("Rewritten Query   :", search_query)
+        print("=" * 60)
+
+        chunks = RetrieverService.search(
+            search_query,
             top_k=5,
         )
 
