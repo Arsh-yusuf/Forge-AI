@@ -10,6 +10,7 @@ import { useState } from "react";
 
 import { login } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
 
@@ -20,25 +21,35 @@ export default function Login() {
 
     const auth = useAuth();
 
+    const navigate=useNavigate();
+
+
+
     async function handleLogin() {
 
         try {
 
             const response =
                 await login(email, password);
+            
 
             auth.loginUser(
                 response.access_token
             );
 
-            window.location.href =
-                "/dashboard";
+            navigate("/dashboard");
 
         }
 
-        catch {
+        catch (error:any) {
 
-            alert("Invalid credentials");
+            console.error(error);
+
+            alert(
+                error?.response?.data?.detail ??
+                error?.message ??
+                "Login failed"
+            );
 
         }
 

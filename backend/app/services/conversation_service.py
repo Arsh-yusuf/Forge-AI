@@ -8,6 +8,7 @@ class ConversationService:
 
     @staticmethod
     def create_session(db: Session) -> ChatSession:
+
         session = ChatSession()
 
         db.add(session)
@@ -49,3 +50,25 @@ class ConversationService:
         )
 
         return messages
+
+    @staticmethod
+    def get_sessions(db: Session):
+
+        return (
+            db.query(ChatSession)
+            .order_by(ChatSession.created_at.desc())
+            .all()
+        )
+
+    @staticmethod
+    def get_session_messages(
+        db: Session,
+        session_id: int,
+    ):
+
+        return (
+            db.query(ChatMessage)
+            .filter(ChatMessage.session_id == session_id)
+            .order_by(ChatMessage.created_at.asc())
+            .all()
+        )
