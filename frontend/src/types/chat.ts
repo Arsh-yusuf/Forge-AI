@@ -4,6 +4,20 @@ export interface Message {
 
     content: string;
 
+    sources?: Source[];
+
+}
+
+export interface Source {
+
+    document_name: string;
+
+    page_number: number;
+
+    section: string;
+
+    score: number;
+
 }
 
 export interface ChatResponse {
@@ -11,6 +25,8 @@ export interface ChatResponse {
     session_id: number;
 
     answer: string;
+
+    sources: Source[];
 
 }
 

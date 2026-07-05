@@ -102,6 +102,7 @@ export default function useChat() {
                     role: "assistant",
 
                     content: response.answer,
+                    sources:response.sources
 
                 }
 

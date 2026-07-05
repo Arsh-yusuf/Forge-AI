@@ -23,6 +23,7 @@ export default function ChatWindow({ messages }: Props) {
                     key={index}
                     role={message.role}
                     content={message.content}
+                    sources={message.sources}
                 />
             ))}
         </Box>
