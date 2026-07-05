@@ -1,14 +1,18 @@
 import {
+
     Box,
+
     Button,
+
     TextField,
+
 } from "@mui/material";
 
 interface Props {
 
     question: string;
 
-    setQuestion: (value: string) => void;
+    setQuestion: (text: string) => void;
 
     onSend: () => void;
 
@@ -28,38 +32,82 @@ export default function ChatInput({
 
 }: Props) {
 
+    function handleKeyDown(
+
+        event: React.KeyboardEvent
+
+    ) {
+
+        if (
+
+            event.key === "Enter" &&
+
+            !event.shiftKey
+
+        ) {
+
+            event.preventDefault();
+
+            onSend();
+
+        }
+
+    }
+
     return (
 
         <Box
+
             display="flex"
+
             gap={2}
-            mt={2}
+
         >
 
             <TextField
+
                 fullWidth
+
                 multiline
+
                 maxRows={4}
-                placeholder="Ask ForgeAI..."
+
                 value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                onKeyDown={(e) => {
-                    if (
-                        e.key === "Enter" &&
-                        !e.shiftKey
-                    ) {
-                        e.preventDefault();
-                        onSend();
-                    }
-                }}
+
+                onChange={(e)=>
+
+                    setQuestion(
+
+                        e.target.value
+
+                    )
+
+                }
+
+                onKeyDown={handleKeyDown}
+
+                placeholder="Ask anything..."
+
             />
 
             <Button
+
                 variant="contained"
-                disabled={loading}
+
+                disabled={
+
+                    loading ||
+
+                    !question.trim()
+
+                }
+
                 onClick={onSend}
+
             >
+
                 Send
+
             </Button>
 
         </Box>

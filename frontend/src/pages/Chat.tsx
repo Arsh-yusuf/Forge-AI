@@ -71,6 +71,7 @@ export default function Chat() {
                     <ChatWindow
 
                         messages={messages}
+                        loading={loading}
 
                     />
 

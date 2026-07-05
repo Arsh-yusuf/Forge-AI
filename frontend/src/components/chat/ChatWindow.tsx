@@ -1,6 +1,12 @@
 import {
     Box,
+    CircularProgress,
 } from "@mui/material";
+
+import {
+    useEffect,
+    useRef,
+} from "react";
 
 import MessageBubble from "./MessageBubble";
 
@@ -12,13 +18,29 @@ interface Props {
 
     messages: Message[];
 
+    loading: boolean;
+
 }
 
 export default function ChatWindow({
 
     messages,
 
+    loading,
+
 }: Props) {
+
+    const bottomRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+
+        bottomRef.current?.scrollIntoView({
+
+            behavior: "smooth",
+
+        });
+
+    }, [messages, loading]);
 
     return (
 
@@ -31,6 +53,8 @@ export default function ChatWindow({
                 overflowY: "auto",
 
                 mb: 2,
+
+                pr: 1,
 
             }}
 
@@ -55,6 +79,32 @@ export default function ChatWindow({
                 ))
 
             }
+
+            {
+
+                loading && (
+
+                    <Box
+
+                        display="flex"
+
+                        justifyContent="flex-start"
+
+                        mt={2}
+
+                    >
+
+                        <CircularProgress
+                            size={24}
+                        />
+
+                    </Box>
+
+                )
+
+            }
+
+            <div ref={bottomRef} />
 
         </Box>
 
