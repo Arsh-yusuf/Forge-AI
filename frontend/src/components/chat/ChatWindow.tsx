@@ -1,31 +1,63 @@
-import { Box } from "@mui/material";
-import type { Message } from "../../types/chat";
+import {
+    Box,
+} from "@mui/material";
+
 import MessageBubble from "./MessageBubble";
 
+import type {
+    Message,
+} from "../../types/chat";
+
 interface Props {
+
     messages: Message[];
+
 }
 
-export default function ChatWindow({ messages }: Props) {
+export default function ChatWindow({
+
+    messages,
+
+}: Props) {
+
     return (
+
         <Box
+
             sx={{
-                flex: 1,
+
+                height: "60vh",
+
                 overflowY: "auto",
-                p: 2,
-                minHeight: "60vh",
-                bgcolor: "#f8f9fb",
-                borderRadius: 2,
+
+                mb: 2,
+
             }}
+
         >
-            {messages.map((message, index) => (
-                <MessageBubble
-                    key={index}
-                    role={message.role}
-                    content={message.content}
-                    sources={message.sources}
-                />
-            ))}
+
+            {
+
+                messages.map((message, index) => (
+
+                    <MessageBubble
+
+                        key={index}
+
+                        role={message.role}
+
+                        content={message.content}
+
+                        sources={message.sources}
+
+                    />
+
+                ))
+
+            }
+
         </Box>
+
     );
+
 }

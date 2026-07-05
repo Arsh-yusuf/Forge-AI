@@ -1,29 +1,19 @@
 import {
-
     Card,
-
     CardContent,
-
-    Typography,
-
     Chip,
-
     Stack,
-
+    Typography,
 } from "@mui/material";
 
 import type { Source } from "../../types/chat";
 
 interface Props {
-
     source: Source;
-
 }
 
 export default function SourceCard({
-
     source,
-
 }: Props) {
 
     return (
@@ -31,19 +21,17 @@ export default function SourceCard({
         <Card
             variant="outlined"
             sx={{
-                mb:2,
-                borderRadius:2,
+                mt: 1,
+                borderRadius: 2,
             }}
         >
 
             <CardContent>
 
                 <Typography
-                    fontWeight={600}
+                    fontWeight="bold"
                 >
-
                     📄 {source.document_name}
-
                 </Typography>
 
                 <Stack
@@ -53,31 +41,36 @@ export default function SourceCard({
                 >
 
                     <Chip
-
+                        size="small"
                         label={`Page ${source.page_number}`}
-
                     />
 
                     <Chip
-
-                        label={`${(
-                            source.score*100
-                        ).toFixed(1)}% Match`}
-
+                        size="small"
                         color="primary"
-
+                        label={`${(source.score * 100).toFixed(1)}% Match`}
                     />
 
                 </Stack>
 
-                <Typography
-                    mt={2}
-                    color="text.secondary"
-                >
+                {
 
-                    {source.section}
+                    source.section &&
+                    source.section !== "Unknown" && (
 
-                </Typography>
+                        <Typography
+                            mt={2}
+                            variant="body2"
+                            color="text.secondary"
+                        >
+
+                            {source.section}
+
+                        </Typography>
+
+                    )
+
+                }
 
             </CardContent>
 

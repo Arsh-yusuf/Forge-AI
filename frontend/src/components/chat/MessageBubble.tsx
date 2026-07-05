@@ -8,7 +8,9 @@ import ReactMarkdown from "react-markdown";
 
 import SourcePanel from "./SourcePanel";
 
-import type { Source } from "../../types/chat";
+import type {
+    Source,
+} from "../../types/chat";
 
 interface Props {
 
@@ -35,30 +37,44 @@ export default function MessageBubble({
     return (
 
         <Box
+
             display="flex"
+
             justifyContent={
                 isUser
                     ? "flex-end"
                     : "flex-start"
             }
+
             mb={2}
+
         >
 
             <Paper
+
                 sx={{
+
                     p: 2,
+
                     maxWidth: "75%",
+
                     bgcolor: isUser
                         ? "primary.main"
                         : "background.paper",
+
                     color: isUser
                         ? "white"
                         : "black",
+
                     borderRadius: 3,
+
                 }}
+
             >
 
-                <Typography component="div">
+                <Typography
+                    component="div"
+                >
 
                     <ReactMarkdown>
 
@@ -69,15 +85,17 @@ export default function MessageBubble({
                 </Typography>
 
                 {
-                    !isUser &&
-                    sources &&
-                    sources.length > 0 && (
+
+                    !isUser && (
 
                         <SourcePanel
+
                             sources={sources}
+
                         />
 
                     )
+
                 }
 
             </Paper>
