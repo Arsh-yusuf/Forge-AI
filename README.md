@@ -166,45 +166,45 @@ Features:
 
 ---
 
-# System Architecture
+# Project Workflow
 
 ```
-                     React Frontend
-                           │
-                           │
-                 JWT Authentication
-                           │
-                           ▼
-                     FastAPI Backend
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-        ▼                  ▼                  ▼
- Document Upload      AI Chat          Knowledge Graph
-        │                  │                  │
-        ▼                  ▼                  │
-   PDF Extraction    Query Rewriter           │
-        │                  │                  │
-        ▼                  ▼                  │
- Semantic Chunking   Prompt Builder           │
-        │                  │                  │
-        ▼                  ▼                  │
- Sentence Embeddings        │                │
-        │                  ▼                │
-        └──────────► ChromaDB ◄─────────────┘
-                     Vector Search
-                           │
-                           ▼
-                     OpenRouter LLM
-                           │
-                           ▼
-                   AI Generated Answer
-                           │
-                           ▼
-                  PostgreSQL Database
+                    User Login
+                         │
+                         ▼
+                  Authentication
+                         │
+                         ▼
+                 ForgeAI Dashboard
+                         │
+        ┌────────────────┼────────────────┐
+        │                │                │
+        ▼                ▼                ▼
+ Upload Document      AI Chat      Knowledge Graph
+        │                │                │
+        ▼                ▼                │
+ PDF Text Extraction  User Question       │
+        │                │                │
+        ▼                ▼                │
+ Semantic Chunking  Query Rewriting       │
+        │                │                │
+        ▼                ▼                │
+ Generate Embeddings Retrieval Engine     │
+        │                │                │
+        ▼                ▼                │
+     ChromaDB      Relevant Chunks        │
+        │                │                │
+        └────────────► Prompt Builder ◄───┘
+                         │
+                         ▼
+                 OpenRouter LLM
+                         │
+                         ▼
+               Source-backed Response
+                         │
+                         ▼
+             Conversation History Saved
 ```
-
----
 
 # Tech Stack
 
@@ -408,6 +408,81 @@ GET /graph/node/{concept}
 
 ---
 
+
+# Challenges Faced
+
+During the development of ForgeAI several engineering challenges were encountered.
+
+## 1. Context-aware Conversations
+
+Challenge
+
+Follow-up questions such as:
+
+> Why is it important?
+
+should automatically refer to the previous engineering topic.
+
+Solution
+
+Implemented conversation history with a Query Rewriter that rewrites follow-up questions into standalone questions before retrieval.
+
+---
+
+## 2. Accurate Document Retrieval
+
+Challenge
+
+Large industrial manuals contain thousands of paragraphs, making direct LLM querying inefficient.
+
+Solution
+
+Implemented semantic chunking with dense embeddings using Sentence Transformers and ChromaDB to retrieve only the most relevant sections.
+
+---
+
+## 3. Explainable AI Responses
+
+Challenge
+
+LLM-generated responses should be verifiable.
+
+Solution
+
+Each response includes:
+
+- Source document
+- Page number
+- Section
+- Similarity-based retrieval
+
+allowing engineers to verify every answer.
+
+---
+
+## 4. Knowledge Discovery
+
+Challenge
+
+Engineers should be able to visualize relationships between engineering concepts instead of reading hundreds of pages.
+
+Solution
+
+Implemented an interactive Knowledge Graph generated from uploaded documents with clickable nodes and linked document references.
+
+---
+
+## 5. Session Management
+
+Challenge
+
+Maintain multiple conversations without losing context.
+
+Solution
+
+Implemented persistent chat sessions with automatic session titles and conversation history stored in PostgreSQL.
+
+
 # Future Enhancements
 
 - OCR support for scanned documents
@@ -417,6 +492,20 @@ GET /graph/node/{concept}
 - Neo4j Graph Database integration
 - Multi-Agent AI workflows
 - Cloud deployment with persistent vector database
+
+# Key Innovations
+
+ForgeAI combines multiple AI techniques into a unified platform.
+
+- Retrieval-Augmented Generation (RAG)
+- Semantic Search
+- Conversation Memory
+- Explainable AI with source attribution
+- Interactive Knowledge Graph
+- Industrial Document Intelligence
+
+Unlike traditional document search systems, ForgeAI enables engineers to ask natural language questions and receive context-aware, source-backed responses within seconds.
+
 
 ---
 
@@ -455,3 +544,9 @@ This project was developed as part of a Hackathon submission.
 - OpenRouter
 - spaCy
 - PyMuPDF
+
+# Impact
+
+ForgeAI significantly reduces the time required to search technical documentation and assists engineers in accessing critical maintenance knowledge through natural language interaction.
+
+The platform transforms static industrial documents into an intelligent knowledge system capable of supporting maintenance, operations, and decision-making processes.
