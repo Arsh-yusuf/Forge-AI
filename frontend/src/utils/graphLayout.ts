@@ -1,76 +1,49 @@
 import dagre from "@dagrejs/dagre";
 import { type Node, type Edge } from "reactflow";
 
-const dagreGraph = new dagre.graphlib.Graph();
+const NODE_WIDTH = 160;
+const NODE_HEIGHT = 48;
 
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 60;
-
-export function getLayoutedElements(
-    nodes: Node[],
-    edges: Edge[]
-) {
+/**
+ * Uses Dagre with LR (left-right) direction and looser spacing
+ * to produce a more organic graph layout for knowledge graphs.
+ */
+export function getLayoutedElements(nodes: Node[], edges: Edge[]) {
+    const dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setDefaultEdgeLabel(() => ({}));
 
     dagreGraph.setGraph({
-
-        rankdir: "TB",
-
-        ranksep: 80,
-
-        nodesep: 60,
-
+        rankdir: "LR",      // Left-right feels more natural for knowledge graphs
+        ranksep: 120,        // More horizontal breathing room
+        nodesep: 55,         // Vertical spacing between nodes on the same rank
+        edgesep: 20,
+        marginx: 40,
+        marginy: 40,
     });
 
     nodes.forEach((node) => {
-
         dagreGraph.setNode(node.id, {
-
             width: NODE_WIDTH,
-
             height: NODE_HEIGHT,
-
         });
-
     });
 
     edges.forEach((edge) => {
-
-        dagreGraph.setEdge(
-
-            edge.source,
-
-            edge.target
-
-        );
-
+        dagreGraph.setEdge(edge.source, edge.target);
     });
 
     dagre.layout(dagreGraph);
 
     const layoutedNodes = nodes.map((node) => {
-
         const position = dagreGraph.node(node.id);
-
-        node.position = {
-
-            x: position.x - NODE_WIDTH / 2,
-
-            y: position.y - NODE_HEIGHT / 2,
-
+        return {
+            ...node,
+            position: {
+                x: position.x - NODE_WIDTH / 2,
+                y: position.y - NODE_HEIGHT / 2,
+            },
         };
-
-        return node;
-
     });
 
-    return {
-
-        nodes: layoutedNodes,
-
-        edges,
-
-    };
-
+    return { nodes: layoutedNodes, edges };
 }

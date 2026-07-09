@@ -24,12 +24,11 @@ export default function SourcePanel({
 
     return (
 
-        <Box mt={3}>
+        <Box sx={{ mt: 3 }}>
 
             <Typography
                 variant="subtitle1"
-                fontWeight="bold"
-                mb={1}
+                sx={{ fontWeight: "bold", mb: 1 }}
             >
 
                 Sources Used

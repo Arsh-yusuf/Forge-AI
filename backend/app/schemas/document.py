@@ -19,6 +19,7 @@ class DocumentResponse(BaseModel):
 
     id: int
     original_filename: str
+    document_type: DocumentType
     uploaded_at: datetime
 
 

@@ -1,259 +1,131 @@
 from collections import Counter, defaultdict
-from itertools import combinations
 
 from sqlalchemy.orm import Session
 
-from app.models.document_chunk import DocumentChunk
-from app.utils.nlp import extract_concepts
+from app.models.graph_triple import GraphTriple
 
 
 class GraphService:
     """
-    Builds a knowledge graph using concept co-occurrence.
-
-    Pipeline:
-        1. Extract concepts from every chunk
-        2. Count concept frequency
-        3. Keep only important concepts
-        4. Build concept co-occurrence graph
-        5. Keep strongest relationships
+    Builds a knowledge graph from LLM-extracted entity-relation triples
+    stored in the graph_triples table.
     """
 
-    MAX_NODES = 30
-    MAX_EDGES = 50
-    MIN_FREQUENCY = 3
-    MAX_NEIGHBORS = 5
-
     @staticmethod
-    def _extract_chunk_concepts(chunks):
+    def get_graph(db: Session):
+        triples = db.query(GraphTriple).all()
 
-        chunk_concepts = []
-        concept_counter = Counter()
+        if not triples:
+            return {"nodes": [], "edges": []}
 
-        for chunk in chunks:
+        # Build node registry: id -> node dict
+        node_map: dict[str, dict] = {}
+        edge_counter: Counter = Counter()
 
-            concepts = extract_concepts(chunk.chunk_text)
+        for triple in triples:
+            src = triple.entity_from.strip()
+            tgt = triple.entity_to.strip()
+            rel = triple.relation.strip()
 
-            concepts = list(dict.fromkeys(concepts))
+            if not src or not tgt:
+                continue
 
-            chunk_concepts.append(
-                {
-                    "chunk": chunk,
-                    "concepts": concepts,
+            # Register source node
+            if src not in node_map:
+                node_map[src] = {
+                    "id": src,
+                    "label": src,
+                    "entity_type": triple.entity_from_type or "OTHER",
+                    "count": 0,
+                    "documents": set(),
                 }
-            )
+            node_map[src]["count"] += 1
+            node_map[src]["documents"].add(triple.document_id)
 
-            concept_counter.update(concepts)
+            # Register target node
+            if tgt not in node_map:
+                node_map[tgt] = {
+                    "id": tgt,
+                    "label": tgt,
+                    "entity_type": triple.entity_to_type or "OTHER",
+                    "count": 0,
+                    "documents": set(),
+                }
+            node_map[tgt]["count"] += 1
+            node_map[tgt]["documents"].add(triple.document_id)
 
-        return chunk_concepts, concept_counter
+            # Accumulate edge weight
+            edge_key = (src, rel, tgt)
+            edge_counter[edge_key] += 1
 
-    @staticmethod
-    def _select_top_concepts(counter):
+        # Finalise nodes
+        final_nodes = []
+        for node in node_map.values():
+            node["documents"] = sorted(list(node["documents"]))
+            final_nodes.append(node)
 
-        frequent = [
+        final_nodes.sort(key=lambda n: n["count"], reverse=True)
 
-            (concept, count)
-
-            for concept, count in counter.items()
-
-            if count >= GraphService.MIN_FREQUENCY
-
-        ]
-
-        frequent.sort(
-            key=lambda x: x[1],
-            reverse=True,
-        )
-
-        selected = frequent[: GraphService.MAX_NODES]
-
-        return {
-
-            concept: count
-
-            for concept, count in selected
-
-        }
-
-    @staticmethod
-    def _build_nodes(chunk_concepts, selected):
-
-        nodes = {}
-
-        for item in chunk_concepts:
-
-            chunk = item["chunk"]
-
-            concepts = item["concepts"]
-
-            for concept in concepts:
-
-                if concept not in selected:
-
-                    continue
-
-                if concept not in nodes:
-
-                    nodes[concept] = {
-
-                        "id": concept,
-
-                        "label": concept.title(),
-
-                        "count": selected[concept],
-
-                        "documents": set(),
-
-                    }
-
-                nodes[concept]["documents"].add(
-                    chunk.document_id
-                )
-
-        return nodes
-
-    @staticmethod
-    def _build_edge_weights(chunk_concepts, selected):
-
-        edge_counter = Counter()
-
-        for item in chunk_concepts:
-
-            concepts = [
-
-                c
-
-                for c in item["concepts"]
-
-                if c in selected
-
-            ]
-
-            concepts = sorted(set(concepts))
-
-            for source, target in combinations(
-                concepts,
-                2,
-            ):
-
-                edge_counter[(source, target)] += 1
-
-        return edge_counter
-
-    @staticmethod
-    def _build_edges(edge_counter):
-
+        # Build edges (top 60 by weight)
         sorted_edges = sorted(
             edge_counter.items(),
             key=lambda x: x[1],
             reverse=True,
-        )
+        )[:60]
 
-        neighbour_count = defaultdict(int)
-        edges = []
-
-        for (source, target), weight in sorted_edges:
-
-            if len(edges) >= GraphService.MAX_EDGES:
-                break
-
-            if (
-                neighbour_count[source]
-                >= GraphService.MAX_NEIGHBORS
-            ):
-                continue
-
-            if (
-                neighbour_count[target]
-                >= GraphService.MAX_NEIGHBORS
-            ):
-                continue
-
-            neighbour_count[source] += 1
-            neighbour_count[target] += 1
-
-            edges.append(
+        final_edges = []
+        for (src, rel, tgt), weight in sorted_edges:
+            final_edges.append(
                 {
-                    "id": f"{source}-{target}",
-                    "source": source,
-                    "target": target,
+                    "id": f"{src}--{rel}--{tgt}",
+                    "source": src,
+                    "target": tgt,
+                    "relation": rel.replace("_", " "),
                     "weight": weight,
                 }
             )
 
-        return edges
+        return {"nodes": final_nodes, "edges": final_edges}
 
     @staticmethod
-    def get_graph(db: Session):
+    def get_node_details(db: Session, concept: str):
+        """
+        Returns all triples that mention this entity (as source or target),
+        along with document info.
+        """
+        concept_clean = concept.strip()
 
-        chunks = db.query(DocumentChunk).all()
-
-        if not chunks:
-            return {"nodes": [], "edges": []}
-
-        # Step 1
-        chunk_concepts, concept_counter = (
-            GraphService._extract_chunk_concepts(chunks)
+        triples = (
+            db.query(GraphTriple)
+            .filter(
+                (GraphTriple.entity_from == concept_clean)
+                | (GraphTriple.entity_to == concept_clean)
+            )
+            .all()
         )
-
-        # Step 2
-        selected = GraphService._select_top_concepts(concept_counter)
-
-        # Step 3
-        nodes = GraphService._build_nodes(chunk_concepts, selected)
-
-        # Step 4
-        edge_counter = (
-            GraphService._build_edge_weights(chunk_concepts, selected)
-        )
-
-        # Step 5
-        edges = GraphService._build_edges(edge_counter)
-
-        # Step 6
-        final_nodes = []
-        for node in nodes.values():
-            node["documents"] = sorted(list(node["documents"]))
-            final_nodes.append(node)
-
-        # Step 7
-        final_nodes.sort(key=lambda x: x["count"], reverse=True)
-
-        return {"nodes": final_nodes, "edges": edges} 
-
-    @staticmethod
-    def get_node_details(
-        db: Session,
-        concept: str,
-    ):
-
-        chunks = db.query(DocumentChunk).all()
 
         occurrences = []
+        seen = set()
 
-        concept = concept.lower()
-
-        for chunk in chunks:
-
-            concepts = extract_concepts(
-                chunk.chunk_text
-            )
-
-            if concept not in concepts:
+        for triple in triples:
+            doc = triple.document
+            if not doc:
                 continue
+
+            key = (doc.title, triple.relation, triple.entity_from, triple.entity_to)
+            if key in seen:
+                continue
+            seen.add(key)
 
             occurrences.append(
                 {
-                    "document": chunk.document.title,
-                    "page": chunk.page_number,
-                    "section": chunk.section_title,
+                    "document": doc.title,
+                    "page": 1,
+                    "section": f"{triple.entity_from} → {triple.relation.replace('_', ' ')} → {triple.entity_to}",
                 }
             )
 
         return {
-
-            "concept": concept.title(),
-
+            "concept": concept_clean,
             "occurrences": occurrences,
-
-        }  
+        }

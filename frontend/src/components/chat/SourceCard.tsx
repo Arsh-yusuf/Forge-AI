@@ -21,15 +21,17 @@ export default function SourceCard({
         <Card
             variant="outlined"
             sx={{
-                mt: 1,
-                borderRadius: 2,
+                mt: 1.5,
+                borderRadius: 3,
+                background: "rgba(255, 255, 255, 0.02)",
+                borderColor: "rgba(255, 255, 255, 0.05)",
             }}
         >
 
             <CardContent>
 
                 <Typography
-                    fontWeight="bold"
+                    sx={{ fontWeight: "bold" }}
                 >
                     📄 {source.document_name}
                 </Typography>
@@ -37,7 +39,7 @@ export default function SourceCard({
                 <Stack
                     direction="row"
                     spacing={1}
-                    mt={2}
+                    sx={{ mt: 2 }}
                 >
 
                     <Chip
@@ -59,9 +61,8 @@ export default function SourceCard({
                     source.section !== "Unknown" && (
 
                         <Typography
-                            mt={2}
                             variant="body2"
-                            color="text.secondary"
+                            sx={{ mt: 2, color: "text.secondary" }}
                         >
 
                             {source.section}

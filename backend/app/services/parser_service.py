@@ -18,7 +18,8 @@ class ParserService:
         document.status = DocumentStatus.PROCESSED
         ChunkService.create_chunks(
             db,
-            document
+            document,
+            parsed
         )
 
         db.commit()

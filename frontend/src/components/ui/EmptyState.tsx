@@ -10,28 +10,20 @@ interface Props {
 }
 
 export default function EmptyState({
-
     message,
-
 }: Props) {
-
     return (
-
         <Box
-            py={8}
-            textAlign="center"
+            sx={{
+                py: 8,
+                textAlign: "center"
+            }}
         >
-
             <Typography
                 color="text.secondary"
             >
-
                 {message}
-
             </Typography>
-
         </Box>
-
     );
-
 }

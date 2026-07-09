@@ -15,3 +15,5 @@ pymupdf
 sentence-transformers
 chromadb
 spacy
+pytesseract
+Pillow

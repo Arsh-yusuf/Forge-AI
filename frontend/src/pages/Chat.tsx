@@ -48,8 +48,10 @@ export default function Chat() {
             />
 
             <Box
-                display="flex"
-                gap={2}
+                sx={{
+                    display: "flex",
+                    gap: 2,
+                }}
             >
 
                 <ConversationList
@@ -65,7 +67,7 @@ export default function Chat() {
                 />
 
                 <Box
-                    flex={1}
+                    sx={{ flex: 1 }}
                 >
 
                     <ChatWindow

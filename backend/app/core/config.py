@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     )
 
     DOCUMENT_STORAGE:str="storage/documents"
-
+    TESSERACT_PATH: str=""
     OPENROUTER_API_KEY: str
     OPENROUTER_BASE_URL: str 
     OPENROUTER_MODEL: str 

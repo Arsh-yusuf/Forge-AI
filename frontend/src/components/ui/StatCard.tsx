@@ -40,9 +40,11 @@ export default function StatCard({
             <CardContent>
 
                 <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
+                    sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center"
+                    }}
                 >
 
                     <Typography
@@ -59,7 +61,7 @@ export default function StatCard({
 
                 <Typography
                     variant="h4"
-                    mt={2}
+                    sx={{ mt: 2 }}
                 >
 
                     {value}

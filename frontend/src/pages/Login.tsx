@@ -56,74 +56,129 @@ export default function Login() {
     }
 
     return (
-
         <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            height="100vh"
+            sx={{
+                position: "relative",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "100vh",
+                width: "100vw",
+                overflow: "hidden",
+                background: "radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(6, 182, 212, 0.15) 0%, transparent 50%), #070a12",
+            }}
         >
+            {/* Glowing background shapes */}
+            <Box
+                sx={{
+                    position: "absolute",
+                    width: "350px",
+                    height: "350px",
+                    borderRadius: "50%",
+                    background: "rgba(168, 85, 247, 0.15)",
+                    filter: "blur(70px)",
+                    top: "15%",
+                    left: "20%",
+                    pointerEvents: "none",
+                }}
+            />
+            <Box
+                sx={{
+                    position: "absolute",
+                    width: "350px",
+                    height: "350px",
+                    borderRadius: "50%",
+                    background: "rgba(6, 182, 212, 0.15)",
+                    filter: "blur(70px)",
+                    bottom: "15%",
+                    right: "20%",
+                    pointerEvents: "none",
+                }}
+            />
 
             <Paper
+                elevation={0}
                 sx={{
-                    p: 5,
-                    width: 400,
+                    p: 6,
+                    width: 440,
+                    borderRadius: 4,
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    backgroundColor: "rgba(17, 25, 40, 0.75)",
+                    backdropFilter: "blur(20px)",
+                    boxShadow: "0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(168, 85, 247, 0.1)",
+                    zIndex: 1,
+                    textAlign: "center",
                 }}
             >
-
                 <Typography
-                    variant="h4"
-                    gutterBottom
+                    variant="h3"
+                    sx={{
+                        fontWeight: 900,
+                        mb: 1,
+                        background: "linear-gradient(135deg, #a855f7 0%, #06b6d4 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        letterSpacing: "-1px",
+                    }}
                 >
-
                     ForgeAI
-
                 </Typography>
 
                 <Typography
-                    mb={3}
+                    variant="body1"
+                    sx={{
+                        color: "text.secondary",
+                        mb: 4,
+                        fontWeight: 500,
+                        fontSize: "0.95rem",
+                    }}
                 >
-
-                    AI Assistant for Steel Plants
-
+                    Enterprise AI Knowledge Suite for Steel Plants
                 </Typography>
 
-                <TextField
-                    fullWidth
-                    label="Email"
-                    margin="normal"
-                    value={email}
-                    onChange={(e)=>
-                        setEmail(e.target.value)
-                    }
-                />
+                <Box sx={{ textAlign: "left" }}>
+                    <TextField
+                        fullWidth
+                        label="Email Address"
+                        margin="normal"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        slotProps={{
+                            inputLabel: { style: { color: "rgba(255, 255, 255, 0.5)" } }
+                        }}
+                    />
 
-                <TextField
-                    fullWidth
-                    type="password"
-                    label="Password"
-                    margin="normal"
-                    value={password}
-                    onChange={(e)=>
-                        setPassword(e.target.value)
-                    }
-                />
+                    <TextField
+                        fullWidth
+                        type="password"
+                        label="Password"
+                        margin="normal"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        slotProps={{
+                            inputLabel: { style: { color: "rgba(255, 255, 255, 0.5)" } }
+                        }}
+                    />
+                </Box>
 
                 <Button
                     fullWidth
                     variant="contained"
-                    sx={{ mt:2 }}
+                    size="large"
+                    sx={{
+                        mt: 4,
+                        py: 1.5,
+                        fontSize: "1rem",
+                        fontWeight: 700,
+                        letterSpacing: "0.5px",
+                        boxShadow: "0 4px 20px rgba(168, 85, 247, 0.3)",
+                    }}
                     onClick={handleLogin}
                 >
-
-                    Login
-
+                    Access Platform
                 </Button>
-
             </Paper>
-
         </Box>
-
     );
 
 }

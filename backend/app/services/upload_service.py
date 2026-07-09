@@ -8,7 +8,9 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.constants import DocumentStatus
 from app.models.document import Document
+from app.models.document_chunk import DocumentChunk
 from app.models.user import User
+from app.services.graph_extractor import GraphExtractorService
 
 
 class UploadService:
@@ -62,5 +64,14 @@ class UploadService:
             db,
             document
         )
+
+        # Fetch the persisted chunks and run LLM graph extraction
+        chunks = (
+            db.query(DocumentChunk)
+            .filter(DocumentChunk.document_id == document.id)
+            .all()
+        )
+
+        GraphExtractorService.extract_and_store(db, document, chunks)
 
         return document
