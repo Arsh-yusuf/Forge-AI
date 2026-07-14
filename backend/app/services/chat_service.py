@@ -75,6 +75,15 @@ class ChatService:
             session_id,
             "assistant",
             answer,
+            sources=[
+                {
+                    "document_name": chunk["document_name"],
+                    "page_number": chunk["page_number"],
+                    "section": chunk["section"],
+                    "score": round(chunk["score"], 4),
+                }
+                for chunk in chunks
+            ],
         )
 
         return {

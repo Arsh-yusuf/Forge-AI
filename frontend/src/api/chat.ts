@@ -21,3 +21,8 @@ export async function getChatHistory(id: number) {
     const response = await api.get(`/chat/${id}`);
     return response.data;
 }
+
+export async function deleteChatSession(id: number) {
+    const response = await api.delete(`/chat/${id}`);
+    return response.data;
+}

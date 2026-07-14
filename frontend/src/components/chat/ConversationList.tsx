@@ -2,20 +2,23 @@ import {
     Box,
     Button,
     Divider,
+    IconButton,
     List,
     ListItemButton,
     ListItemText,
+    Tooltip,
     Typography,
 } from "@mui/material";
 
 import type { ChatSession } from "../../types/chat";
-import { MessageSquarePlus } from "lucide-react";
+import { MessageSquarePlus, Trash2 } from "lucide-react";
 
 interface Props {
     sessions: ChatSession[];
     selectedId: number | null;
     onSelect: (id: number) => void;
     onNewChat: () => void;
+    onDelete: (id: number) => void;
 }
 
 export default function ConversationList({
@@ -23,6 +26,7 @@ export default function ConversationList({
     selectedId,
     onSelect,
     onNewChat,
+    onDelete,
 }: Props) {
     return (
         <Box
@@ -93,51 +97,85 @@ export default function ConversationList({
                     </Box>
                 ) : (
                     sessions.map((session) => (
-                        <ListItemButton
+                        <Box
                             key={session.id}
-                            selected={selectedId === session.id}
-                            onClick={() => onSelect(session.id)}
                             sx={{
+                                display: "flex",
+                                alignItems: "center",
                                 borderRadius: "10px",
                                 mb: 0.5,
-                                py: 1.2,
-                                px: 2,
-                                "&.Mui-selected": {
-                                    backgroundColor: "rgba(168, 85, 247, 0.12)",
-                                    borderLeft: "3px solid #06b6d4",
-                                    color: "#ffffff",
-                                    "& .MuiListItemText-secondary": {
-                                        color: "rgba(6, 182, 212, 0.8)",
-                                    }
-                                }
+                                pr: 0.5,
+                                background: selectedId === session.id
+                                    ? "rgba(168, 85, 247, 0.12)"
+                                    : "transparent",
+                                borderLeft: selectedId === session.id
+                                    ? "3px solid #06b6d4"
+                                    : "3px solid transparent",
+                                "&:hover .delete-btn": {
+                                    opacity: 1,
+                                },
                             }}
                         >
-                            <ListItemText
-                                primary={
-                                    <Typography
-                                        noWrap
-                                        sx={{
-                                            fontSize: "0.875rem",
-                                            fontWeight: selectedId === session.id ? 600 : 500,
-                                            color: "#ffffff"
-                                        }}
-                                    >
-                                        {session.title || "Untitled Session"}
-                                    </Typography>
-                                }
-                                secondary={
-                                    <Typography
-                                        sx={{
-                                            fontSize: "0.75rem",
-                                            mt: 0.5,
-                                            color: "text.secondary"
-                                        }}
-                                    >
-                                        {new Date(session.created_at).toLocaleDateString()}
-                                    </Typography>
-                                }
-                            />
-                        </ListItemButton>
+                            <ListItemButton
+                                onClick={() => onSelect(session.id)}
+                                sx={{
+                                    flex: 1,
+                                    borderRadius: "10px",
+                                    py: 1.2,
+                                    px: 2,
+                                    background: "transparent",
+                                    "&:hover": { background: "transparent" },
+                                }}
+                            >
+                                <ListItemText
+                                    primary={
+                                        <Typography
+                                            noWrap
+                                            sx={{
+                                                fontSize: "0.875rem",
+                                                fontWeight: selectedId === session.id ? 600 : 500,
+                                                color: "#ffffff"
+                                            }}
+                                        >
+                                            {session.title || "Untitled Session"}
+                                        </Typography>
+                                    }
+                                    secondary={
+                                        <Typography
+                                            sx={{
+                                                fontSize: "0.75rem",
+                                                mt: 0.5,
+                                                color: "text.secondary"
+                                            }}
+                                        >
+                                            {new Date(session.created_at).toLocaleDateString()}
+                                        </Typography>
+                                    }
+                                />
+                            </ListItemButton>
+
+                            <Tooltip title="Delete chat" placement="right">
+                                <IconButton
+                                    className="delete-btn"
+                                    size="small"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onDelete(session.id);
+                                    }}
+                                    sx={{
+                                        opacity: 0,
+                                        transition: "opacity 0.15s ease",
+                                        color: "rgba(239, 68, 68, 0.6)",
+                                        "&:hover": {
+                                            color: "#ef4444",
+                                            background: "rgba(239, 68, 68, 0.1)",
+                                        },
+                                    }}
+                                >
+                                    <Trash2 size={14} />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
                     ))
                 )}
             </List>

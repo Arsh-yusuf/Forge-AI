@@ -13,6 +13,9 @@ import {
     FormControl,
     InputLabel,
     Chip,
+    LinearProgress,
+    Snackbar,
+    Alert,
 } from "@mui/material";
 
 import { useEffect, useState } from "react";
@@ -42,6 +45,12 @@ export default function Documents() {
     const [documents, setDocuments] = useState<any[]>([]);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [documentType, setDocumentType] = useState("MANUAL");
+    const [ingesting, setIngesting] = useState(false);
+    const [toast, setToast] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
+        open: false,
+        message: "",
+        severity: "success",
+    });
 
     async function loadDocuments() {
         const data = await getDocuments();
@@ -54,18 +63,21 @@ export default function Documents() {
 
     async function handleUpload() {
         if (!selectedFile) {
-            alert("Please choose a PDF first.");
+            setToast({ open: true, message: "Please choose a PDF first.", severity: "error" });
             return;
         }
 
+        setIngesting(true);
         try {
             await uploadDocument(selectedFile, documentType);
             setSelectedFile(null);
             await loadDocuments();
-            alert("Document uploaded successfully.");
-        } catch (error) {
+            setToast({ open: true, message: "Ingestion complete", severity: "success" });
+        } catch (error: any) {
             console.error(error);
-            alert("Failed to upload document.");
+            setToast({ open: true, message: error?.response?.data?.detail ?? "Failed to upload document.", severity: "error" });
+        } finally {
+            setIngesting(false);
         }
     }
 
@@ -78,9 +90,10 @@ export default function Documents() {
         try {
             await deleteDocument(id);
             await loadDocuments();
-        } catch (error) {
+            setToast({ open: true, message: "Document deleted successfully.", severity: "success" });
+        } catch (error: any) {
             console.error(error);
-            alert("Failed to delete document.");
+            setToast({ open: true, message: "Failed to delete document.", severity: "error" });
         }
     }
 
@@ -120,6 +133,7 @@ export default function Documents() {
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, alignItems: "center" }}>
                     <FormControl
                         sx={{ minWidth: 260 }}
+                        disabled={ingesting}
                     >
                         <InputLabel id="doc-type-label" sx={{ color: "rgba(255, 255, 255, 0.5)" }}>
                             Document Category
@@ -141,6 +155,7 @@ export default function Documents() {
                     <Button
                         variant="outlined"
                         component="label"
+                        disabled={ingesting}
                         startIcon={<UploadCloud size={20} />}
                         sx={{
                             borderStyle: "dashed",
@@ -162,6 +177,7 @@ export default function Documents() {
                             hidden
                             type="file"
                             accept=".pdf"
+                            disabled={ingesting}
                             onChange={(e) => {
                                 if (e.target.files && e.target.files.length > 0) {
                                     setSelectedFile(e.target.files[0]);
@@ -185,7 +201,7 @@ export default function Documents() {
                     <Button
                         variant="contained"
                         onClick={handleUpload}
-                        disabled={!selectedFile}
+                        disabled={!selectedFile || ingesting}
                         sx={{
                             ml: "auto",
                             py: 1.5,
@@ -194,9 +210,17 @@ export default function Documents() {
                             borderRadius: "24px",
                         }}
                     >
-                        Ingest File
+                        {ingesting ? "Ingesting..." : "Ingest File"}
                     </Button>
                 </Box>
+                {ingesting && (
+                    <Box sx={{ width: "100%", mt: 3 }}>
+                        <LinearProgress color="secondary" sx={{ borderRadius: 2, height: 6 }} />
+                        <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.6)", mt: 1, display: "block", textAlign: "center" }}>
+                            Ingesting document and extracting knowledge graph relationships...
+                        </Typography>
+                    </Box>
+                )}
             </Paper>
 
             <Paper
@@ -283,6 +307,20 @@ export default function Documents() {
                     </TableBody>
                 </Table>
             </Paper>
+            <Snackbar
+                open={toast.open}
+                autoHideDuration={4000}
+                onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            >
+                <Alert
+                    onClose={() => setToast((prev) => ({ ...prev, open: false }))}
+                    severity={toast.severity}
+                    sx={{ width: "100%", borderRadius: 2 }}
+                >
+                    {toast.message}
+                </Alert>
+            </Snackbar>
         </MainLayout>
     );
 }

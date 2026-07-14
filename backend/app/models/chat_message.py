@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Text
+from sqlalchemy import DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
@@ -19,6 +19,11 @@ class ChatMessage(Base):
 
     content: Mapped[str] = mapped_column(
         Text
+    )
+
+    sources: Mapped[list | None] = mapped_column(
+        JSON,
+        nullable=True
     )
 
     created_at: Mapped[datetime] = mapped_column(

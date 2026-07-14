@@ -33,6 +33,8 @@ export default function Chat() {
 
         newChat,
 
+        deleteSession,
+
     } = useChat();
 
     return (
@@ -63,6 +65,8 @@ export default function Chat() {
                     onSelect={loadChat}
 
                     onNewChat={newChat}
+
+                    onDelete={deleteSession}
 
                 />
 

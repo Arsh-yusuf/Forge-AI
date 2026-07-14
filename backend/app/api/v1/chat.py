@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.services.conversation_service import ConversationService
 
@@ -21,25 +21,22 @@ router = APIRouter(
     "",
     response_model=ChatResponse,
 )
-
 def chat(
     request: ChatRequest,
     db: Session = Depends(get_db),
 ):
-
     return ChatService.chat(
         db=db,
         question=request.question,
         session_id=request.session_id,
     )
 
+
 @router.get("/sessions")
 def get_chat_sessions(
     db: Session = Depends(get_db),
 ):
-
     sessions = ConversationService.get_sessions(db)
-
     return sessions
 
 
@@ -48,7 +45,6 @@ def get_chat_history(
     session_id: int,
     db: Session = Depends(get_db),
 ):
-
     messages = ConversationService.get_session_messages(
         db,
         session_id,
@@ -56,5 +52,25 @@ def get_chat_history(
 
     return {
         "session_id": session_id,
-        "messages": messages,
+        "messages": [
+            {
+                "role": m.role,
+                "content": m.content,
+                "sources": m.sources or [],
+            }
+            for m in messages
+        ],
     }
+
+
+@router.delete("/{session_id}")
+def delete_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+):
+    deleted = ConversationService.delete_session(db, session_id)
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    return {"message": "Session deleted successfully"}

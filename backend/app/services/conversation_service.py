@@ -23,12 +23,14 @@ class ConversationService:
         session_id: int,
         role: str,
         content: str,
+        sources: list | None = None,
     ):
 
         message = ChatMessage(
             session_id=session_id,
             role=role,
             content=content,
+            sources=sources,
         )
 
         db.add(message)
@@ -72,3 +74,19 @@ class ConversationService:
             .order_by(ChatMessage.created_at.asc())
             .all()
         )
+
+    @staticmethod
+    def delete_session(db: Session, session_id: int) -> bool:
+
+        session = (
+            db.query(ChatSession)
+            .filter(ChatSession.id == session_id)
+            .first()
+        )
+
+        if not session:
+            return False
+
+        db.delete(session)
+        db.commit()
+        return True
