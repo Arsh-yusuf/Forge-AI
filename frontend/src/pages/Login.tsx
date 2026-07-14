@@ -4,55 +4,77 @@ import {
     Paper,
     TextField,
     Typography,
+    Select,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Link,
 } from "@mui/material";
 
 import { useState } from "react";
 
-import { login } from "../api/auth";
+import { login, register } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+const ROLES = [
+    "Plant Manager",
+    "Maintenance Engineer",
+    "Safety Officer",
+    "Quality Engineer",
+    "Operations Engineer"
+];
+
+const DEPARTMENTS = [
+    "Maintenance",
+    "Safety",
+    "Production",
+    "Quality",
+    "Operations",
+    "Utilities",
+    "Warehouse"
+];
+
 export default function Login() {
-
+    const [isRegister, setIsRegister] = useState(false);
     const [email, setEmail] = useState("");
-
-    const [password, setPassword] =
-        useState("");
+    const [password, setPassword] = useState("");
+    const [fullName, setFullName] = useState("");
+    const [role, setRole] = useState("Operations Engineer");
+    const [department, setDepartment] = useState("Operations");
 
     const auth = useAuth();
+    const navigate = useNavigate();
 
-    const navigate=useNavigate();
-
-
-
-    async function handleLogin() {
-
-        try {
-
-            const response =
-                await login(email, password);
-            
-
-            auth.loginUser(
-                response.access_token
-            );
-
-            navigate("/dashboard");
-
+    async function handleAuth() {
+        if (!email || !password) {
+            alert("Email and password are required");
+            return;
         }
 
-        catch (error:any) {
+        try {
+            let response;
+            if (isRegister) {
+                if (!fullName) {
+                    alert("Full Name is required");
+                    return;
+                }
+                response = await register(fullName, email, password, role, department);
+                alert("Account created successfully!");
+            } else {
+                response = await login(email, password);
+            }
 
+            auth.loginUser(response.access_token);
+            navigate("/dashboard");
+        } catch (error: any) {
             console.error(error);
-
             alert(
                 error?.response?.data?.detail ??
                 error?.message ??
-                "Login failed"
+                "Authentication failed"
             );
-
         }
-
     }
 
     return (
@@ -99,8 +121,8 @@ export default function Login() {
             <Paper
                 elevation={0}
                 sx={{
-                    p: 6,
-                    width: 440,
+                    p: 5,
+                    width: 460,
                     borderRadius: 4,
                     border: "1px solid rgba(255, 255, 255, 0.08)",
                     backgroundColor: "rgba(17, 25, 40, 0.75)",
@@ -128,7 +150,7 @@ export default function Login() {
                     variant="body1"
                     sx={{
                         color: "text.secondary",
-                        mb: 4,
+                        mb: 3,
                         fontWeight: 500,
                         fontSize: "0.95rem",
                     }}
@@ -136,11 +158,35 @@ export default function Login() {
                     Enterprise AI Knowledge Suite for Steel Plants
                 </Typography>
 
-                <Box sx={{ textAlign: "left" }}>
+                <Typography
+                    variant="h5"
+                    sx={{
+                        fontWeight: 700,
+                        color: "#fff",
+                        mb: 2,
+                    }}
+                >
+                    {isRegister ? "Create Account" : "Access Platform"}
+                </Typography>
+
+                <Box sx={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 1.5 }}>
+                    {isRegister && (
+                        <TextField
+                            fullWidth
+                            label="Full Name"
+                            size="small"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            slotProps={{
+                                inputLabel: { style: { color: "rgba(255, 255, 255, 0.5)" } }
+                            }}
+                        />
+                    )}
+
                     <TextField
                         fullWidth
                         label="Email Address"
-                        margin="normal"
+                        size="small"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         slotProps={{
@@ -152,13 +198,71 @@ export default function Login() {
                         fullWidth
                         type="password"
                         label="Password"
-                        margin="normal"
+                        size="small"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         slotProps={{
                             inputLabel: { style: { color: "rgba(255, 255, 255, 0.5)" } }
                         }}
                     />
+
+                    {isRegister && (
+                        <>
+                            <FormControl fullWidth size="small">
+                                <InputLabel id="role-select-label" sx={{ color: "rgba(255, 255, 255, 0.5)" }}>
+                                    Role
+                                </InputLabel>
+                                <Select
+                                    labelId="role-select-label"
+                                    value={role}
+                                    label="Role"
+                                    onChange={(e) => setRole(e.target.value)}
+                                    sx={{
+                                        color: "#fff",
+                                        "& .MuiOutlinedInput-notchedOutline": {
+                                            borderColor: "rgba(255, 255, 255, 0.15)",
+                                        },
+                                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                                            borderColor: "rgba(255, 255, 255, 0.3)",
+                                        },
+                                    }}
+                                >
+                                    {ROLES.map((r) => (
+                                        <MenuItem key={r} value={r}>
+                                            {r}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            <FormControl fullWidth size="small">
+                                <InputLabel id="dept-select-label" sx={{ color: "rgba(255, 255, 255, 0.5)" }}>
+                                    Department
+                                </InputLabel>
+                                <Select
+                                    labelId="dept-select-label"
+                                    value={department}
+                                    label="Department"
+                                    onChange={(e) => setDepartment(e.target.value)}
+                                    sx={{
+                                        color: "#fff",
+                                        "& .MuiOutlinedInput-notchedOutline": {
+                                            borderColor: "rgba(255, 255, 255, 0.15)",
+                                        },
+                                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                                            borderColor: "rgba(255, 255, 255, 0.3)",
+                                        },
+                                    }}
+                                >
+                                    {DEPARTMENTS.map((d) => (
+                                        <MenuItem key={d} value={d}>
+                                            {d}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </>
+                    )}
                 </Box>
 
                 <Button
@@ -166,19 +270,37 @@ export default function Login() {
                     variant="contained"
                     size="large"
                     sx={{
-                        mt: 4,
-                        py: 1.5,
-                        fontSize: "1rem",
+                        mt: 3,
+                        py: 1.2,
+                        fontSize: "0.95rem",
                         fontWeight: 700,
                         letterSpacing: "0.5px",
                         boxShadow: "0 4px 20px rgba(168, 85, 247, 0.3)",
                     }}
-                    onClick={handleLogin}
+                    onClick={handleAuth}
                 >
-                    Access Platform
+                    {isRegister ? "Sign Up & Login" : "Access Platform"}
                 </Button>
+
+                <Box sx={{ mt: 3 }}>
+                    <Link
+                        component="button"
+                        variant="body2"
+                        onClick={() => setIsRegister(!isRegister)}
+                        sx={{
+                            color: "#06b6d4",
+                            textDecoration: "none",
+                            fontWeight: 600,
+                            "&:hover": {
+                                color: "#a855f7",
+                                textDecoration: "underline",
+                            }
+                        }}
+                    >
+                        {isRegister ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+                    </Link>
+                </Box>
             </Paper>
         </Box>
     );
-
 }

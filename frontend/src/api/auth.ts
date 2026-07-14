@@ -15,3 +15,24 @@ export async function login(
 
     return response.data;
 }
+
+export async function register(
+    fullName: string,
+    email: string,
+    password: string,
+    role: string,
+    department: string
+) {
+    const response = await api.post(
+        "/auth/register",
+        {
+            full_name: fullName,
+            email,
+            password,
+            role,
+            department,
+        }
+    );
+
+    return response.data;
+}
