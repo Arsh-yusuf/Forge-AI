@@ -15,6 +15,7 @@ import {
     FileText,
     MessageSquare,
     Network,
+    ShieldAlert,
     LogOut
 } from "lucide-react";
 
@@ -42,6 +43,11 @@ const menu = [
         text: "Knowledge Graph",
         icon: <Network size={20} />,
         path: "/graph"
+    },
+    {
+        text: "Compliance Audit",
+        icon: <ShieldAlert size={20} />,
+        path: "/compliance"
     }
 ];
 
