@@ -1,17 +1,21 @@
 import {
+    Alert,
     Box,
     Button,
-    Paper,
-    TextField,
-    Typography,
-    Select,
-    MenuItem,
     FormControl,
+    IconButton,
+    InputAdornment,
     InputLabel,
     Link,
+    MenuItem,
+    Paper,
+    Select,
+    TextField,
+    Typography,
 } from "@mui/material";
 
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { login, register } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
@@ -35,6 +39,17 @@ const DEPARTMENTS = [
     "Warehouse"
 ];
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function parseError(error: any): string {
+    const detail = error?.response?.data?.detail;
+    if (typeof detail === "string") return detail;
+    if (Array.isArray(detail) && detail.length > 0) {
+        return detail[0]?.msg ?? "Validation error";
+    }
+    return error?.message ?? "Authentication failed";
+}
+
 export default function Login() {
     const [isRegister, setIsRegister] = useState(false);
     const [email, setEmail] = useState("");
@@ -42,25 +57,42 @@ export default function Login() {
     const [fullName, setFullName] = useState("");
     const [role, setRole] = useState("Operations Engineer");
     const [department, setDepartment] = useState("Operations");
+    const [showPassword, setShowPassword] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const auth = useAuth();
     const navigate = useNavigate();
 
+    function switchMode() {
+        setIsRegister((prev) => !prev);
+        setErrorMsg("");
+        setShowPassword(false);
+    }
+
     async function handleAuth() {
+        setErrorMsg("");
+
         if (!email || !password) {
-            alert("Email and password are required");
+            setErrorMsg("Email and password are required.");
             return;
         }
 
+        if (!EMAIL_REGEX.test(email)) {
+            setErrorMsg("Please enter a valid email address.");
+            return;
+        }
+
+        if (isRegister && !fullName.trim()) {
+            setErrorMsg("Full name is required.");
+            return;
+        }
+
+        setLoading(true);
         try {
             let response;
             if (isRegister) {
-                if (!fullName) {
-                    alert("Full Name is required");
-                    return;
-                }
                 response = await register(fullName, email, password, role, department);
-                alert("Account created successfully!");
             } else {
                 response = await login(email, password);
             }
@@ -69,11 +101,9 @@ export default function Login() {
             navigate("/dashboard");
         } catch (error: any) {
             console.error(error);
-            alert(
-                error?.response?.data?.detail ??
-                error?.message ??
-                "Authentication failed"
-            );
+            setErrorMsg(parseError(error));
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -90,7 +120,7 @@ export default function Login() {
                 background: "radial-gradient(circle at 30% 30%, rgba(168, 85, 247, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 70%, rgba(6, 182, 212, 0.15) 0%, transparent 50%), #070a12",
             }}
         >
-            {/* Glowing background shapes */}
+            {/* Glowing background orbs */}
             <Box
                 sx={{
                     position: "absolute",
@@ -169,6 +199,22 @@ export default function Login() {
                     {isRegister ? "Create Account" : "Access Platform"}
                 </Typography>
 
+                {/* Inline error banner */}
+                {errorMsg && (
+                    <Alert
+                        severity="error"
+                        onClose={() => setErrorMsg("")}
+                        sx={{
+                            mb: 2,
+                            borderRadius: 2,
+                            textAlign: "left",
+                            fontSize: "0.85rem",
+                        }}
+                    >
+                        {errorMsg}
+                    </Alert>
+                )}
+
                 <Box sx={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 1.5 }}>
                     {isRegister && (
                         <TextField
@@ -188,7 +234,16 @@ export default function Login() {
                         label="Email Address"
                         size="small"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => {
+                            setEmail(e.target.value);
+                            if (errorMsg) setErrorMsg("");
+                        }}
+                        error={!!errorMsg && !EMAIL_REGEX.test(email) && email.length > 0}
+                        helperText={
+                            email.length > 0 && !EMAIL_REGEX.test(email)
+                                ? "Enter a valid email address"
+                                : ""
+                        }
                         slotProps={{
                             inputLabel: { style: { color: "rgba(255, 255, 255, 0.5)" } }
                         }}
@@ -196,13 +251,34 @@ export default function Login() {
 
                     <TextField
                         fullWidth
-                        type="password"
                         label="Password"
                         size="small"
+                        type={showPassword ? "text" : "password"}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                            setPassword(e.target.value);
+                            if (errorMsg) setErrorMsg("");
+                        }}
                         slotProps={{
-                            inputLabel: { style: { color: "rgba(255, 255, 255, 0.5)" } }
+                            inputLabel: { style: { color: "rgba(255, 255, 255, 0.5)" } },
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            onClick={() => setShowPassword((prev) => !prev)}
+                                            edge="end"
+                                            size="small"
+                                            sx={{ color: "rgba(255,255,255,0.4)", "&:hover": { color: "#a855f7" } }}
+                                            aria-label={showPassword ? "Hide password" : "Show password"}
+                                        >
+                                            {showPassword
+                                                ? <EyeOff size={16} />
+                                                : <Eye size={16} />
+                                            }
+                                        </IconButton>
+                                    </InputAdornment>
+                                )
+                            }
                         }}
                     />
 
@@ -269,6 +345,7 @@ export default function Login() {
                     fullWidth
                     variant="contained"
                     size="large"
+                    disabled={loading}
                     sx={{
                         mt: 3,
                         py: 1.2,
@@ -279,14 +356,17 @@ export default function Login() {
                     }}
                     onClick={handleAuth}
                 >
-                    {isRegister ? "Sign Up & Login" : "Access Platform"}
+                    {loading
+                        ? (isRegister ? "Creating account..." : "Signing in...")
+                        : (isRegister ? "Sign Up & Login" : "Access Platform")
+                    }
                 </Button>
 
                 <Box sx={{ mt: 3 }}>
                     <Link
                         component="button"
                         variant="body2"
-                        onClick={() => setIsRegister(!isRegister)}
+                        onClick={switchMode}
                         sx={{
                             color: "#06b6d4",
                             textDecoration: "none",
