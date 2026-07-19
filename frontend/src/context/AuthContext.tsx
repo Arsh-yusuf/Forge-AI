@@ -8,7 +8,7 @@ interface AuthContextType {
 
     token: string | null;
 
-    loginUser: (token: string) => void;
+    loginUser: (token: string, refreshToken: string) => void;
 
     logout: () => void;
 }
@@ -27,11 +27,16 @@ export function AuthProvider({
         localStorage.getItem("access_token")
     );
 
-    function loginUser(token: string) {
+    function loginUser(token: string, refreshToken: string) {
 
         localStorage.setItem(
             "access_token",
             token
+        );
+
+        localStorage.setItem(
+            "refresh_token",
+            refreshToken
         );
 
         setToken(token);
@@ -41,6 +46,10 @@ export function AuthProvider({
 
         localStorage.removeItem(
             "access_token"
+        );
+
+        localStorage.removeItem(
+            "refresh_token"
         );
 
         setToken(null);

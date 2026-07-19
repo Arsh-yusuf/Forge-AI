@@ -97,7 +97,7 @@ export default function Login() {
                 response = await login(email, password);
             }
 
-            auth.loginUser(response.access_token);
+            auth.loginUser(response.access_token, response.refresh_token);
             navigate("/dashboard");
         } catch (error: any) {
             console.error(error);

@@ -16,6 +16,11 @@ import {
     LinearProgress,
     Snackbar,
     Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
 } from "@mui/material";
 
 import { useEffect, useState } from "react";
@@ -51,6 +56,11 @@ export default function Documents() {
         message: "",
         severity: "success",
     });
+    const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; filename: string }>({
+        open: false,
+        id: null,
+        filename: "",
+    });
 
     async function loadDocuments() {
         const data = await getDocuments();
@@ -81,19 +91,22 @@ export default function Documents() {
         }
     }
 
-    async function handleDelete(id: number) {
-        const confirmDelete = window.confirm(
-            "Are you sure you want to delete this document?"
-        );
-        if (!confirmDelete) return;
+    function openDeleteDialog(id: number, filename: string) {
+        setDeleteDialog({ open: true, id, filename });
+    }
+
+    async function handleDeleteConfirm() {
+        if (deleteDialog.id === null) return;
+
+        setDeleteDialog({ open: false, id: null, filename: "" });
 
         try {
-            await deleteDocument(id);
+            await deleteDocument(deleteDialog.id);
             await loadDocuments();
             setToast({ open: true, message: "Document deleted successfully.", severity: "success" });
         } catch (error: any) {
             console.error(error);
-            setToast({ open: true, message: "Failed to delete document.", severity: "error" });
+            setToast({ open: true, message: error?.response?.data?.detail ?? "Failed to delete document.", severity: "error" });
         }
     }
 
@@ -287,7 +300,7 @@ export default function Documents() {
                                             variant="outlined"
                                             size="small"
                                             startIcon={<Trash2 size={14} />}
-                                            onClick={() => handleDelete(doc.id)}
+                                            onClick={() => openDeleteDialog(doc.id, doc.original_filename)}
                                             sx={{
                                                 borderRadius: "16px",
                                                 borderColor: "rgba(239, 68, 68, 0.3)",
@@ -321,6 +334,46 @@ export default function Documents() {
                     {toast.message}
                 </Alert>
             </Snackbar>
+
+            <Dialog
+                open={deleteDialog.open}
+                onClose={() => setDeleteDialog({ open: false, id: null, filename: "" })}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            borderRadius: 4,
+                            bgcolor: "#1e1e2e",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                        }
+                    }
+                }}
+            >
+                <DialogTitle sx={{ fontWeight: 700, color: "#ffffff" }}>
+                    Delete Document
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ color: "rgba(255,255,255,0.7)" }}>
+                        Are you sure you want to delete <strong>{deleteDialog.filename}</strong>?
+                        This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ pb: 3, px: 3 }}>
+                    <Button
+                        onClick={() => setDeleteDialog({ open: false, id: null, filename: "" })}
+                        sx={{ color: "rgba(255,255,255,0.6)", borderRadius: 2 }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        color="error"
+                        sx={{ borderRadius: 2, fontWeight: 700 }}
+                    >
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </MainLayout>
     );
 }

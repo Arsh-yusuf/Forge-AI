@@ -4,10 +4,20 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.schemas.auth import LoginRequest, TokenResponse, RegisterRequest
 from app.services.auth_service import authenticate_user
-from app.core.security import create_access_token, hash_password
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    hash_password,
+    verify_refresh_token,
+)
 from app.models.user import User
 from app.models.role import Role
 from app.models.department import Department
+from pydantic import BaseModel
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
 
 router = APIRouter(
     prefix="/auth",
@@ -36,7 +46,14 @@ def login(
             detail="Invalid credentials"
         )
 
-    token = create_access_token(
+    access = create_access_token(
+        {
+            "sub": user.email,
+            "role": user.role.name
+        }
+    )
+
+    refresh = create_refresh_token(
         {
             "sub": user.email,
             "role": user.role.name
@@ -44,8 +61,54 @@ def login(
     )
 
     return {
-        "access_token": token,
+        "access_token": access,
+        "refresh_token": refresh,
         "token_type": "bearer"
+    }
+
+
+@router.post("/refresh", response_model=TokenResponse)
+def refresh_token(
+    request: RefreshRequest,
+    db: Session = Depends(get_db),
+):
+
+    payload = verify_refresh_token(request.refresh_token)
+
+    if payload is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired refresh token",
+        )
+
+    email = payload.get("sub")
+
+    user = db.query(User).filter(User.email == email).first()
+
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found",
+        )
+
+    new_access = create_access_token(
+        {
+            "sub": user.email,
+            "role": user.role.name,
+        }
+    )
+
+    new_refresh = create_refresh_token(
+        {
+            "sub": user.email,
+            "role": user.role.name,
+        }
+    )
+
+    return {
+        "access_token": new_access,
+        "refresh_token": new_refresh,
+        "token_type": "bearer",
     }
 
 
@@ -91,7 +154,14 @@ def register(
     db.commit()
     db.refresh(new_user)
 
-    token = create_access_token(
+    access = create_access_token(
+        {
+            "sub": new_user.email,
+            "role": role.name
+        }
+    )
+
+    refresh = create_refresh_token(
         {
             "sub": new_user.email,
             "role": role.name
@@ -99,6 +169,7 @@ def register(
     )
 
     return {
-        "access_token": token,
+        "access_token": access,
+        "refresh_token": refresh,
         "token_type": "bearer"
     }
