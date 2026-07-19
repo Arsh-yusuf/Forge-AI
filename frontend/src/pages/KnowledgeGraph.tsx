@@ -126,6 +126,7 @@ export default function KnowledgeGraph() {
     }, []);
 
     async function loadGraph() {
+        setLoading(true);
         try {
             const data = await getGraph();
 
@@ -238,7 +239,7 @@ export default function KnowledgeGraph() {
             <Box
                 sx={{
                     width: "100%",
-                    height: "68vh",
+                    height: "80vh",
                     bgcolor: "rgba(9, 13, 22, 0.25)",
                     borderRadius: 4,
                     border: "1px solid rgba(255, 255, 255, 0.08)",
@@ -289,7 +290,7 @@ export default function KnowledgeGraph() {
                         fitViewOptions={{ padding: 0.15 }}
                         onNodeClick={handleNodeClick}
                         style={{ background: "transparent" }}
-                        minZoom={0.3}
+                        minZoom={0.2}
                     >
                         <Background
                             color="rgba(255, 255, 255, 0.04)"

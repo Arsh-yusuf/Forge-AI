@@ -11,6 +11,7 @@ Important Rules:
 4. If the documents don't fully answer the question, clearly mention what information is missing.
 5. Do NOT mention 'Context 1' or 'Context 2' in your response.
 6. Use a professional engineering tone.
+7. Some retrieved chunks may only contain generic section titles or page headings (e.g., 'Incident Reports'). Always cross-examine the other chunks in the context to extract actual narrative details, incident descriptions, or plant events. Never conclude that no details exist if any chunk contains actual descriptive incident content.
 
 Your response MUST follow this format.
 

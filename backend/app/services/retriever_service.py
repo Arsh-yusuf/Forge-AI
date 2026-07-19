@@ -5,13 +5,14 @@ from app.vectorstore.chroma_client import collection
 class RetrieverService:
 
     @staticmethod
-    def search(query: str, top_k: int = 5):
+    def search(query: str, top_k: int = 8):
 
         embedding = Embedder.encode(query)
 
         results = collection.query(
             query_embeddings=[embedding.tolist()],
-            n_results=top_k,
+            # Query slightly more from Chroma first to allow filtering
+            n_results=top_k * 2,
         )
 
         ids = results["ids"][0]
@@ -26,6 +27,10 @@ class RetrieverService:
             metas,
             distances,
         ):
+            # Filter out generic short header pages/lines that lack vision tags
+            doc_stripped = doc.strip()
+            if len(doc_stripped) < 45 and not any(tag in doc_stripped for tag in ["[TAG]", "[PARAM]", "[VALVE]", "[LINE]", "[NOTE]"]):
+                continue
 
             score = round(1 - distance, 3)
 
@@ -71,4 +76,4 @@ class RetrieverService:
             reverse=True,
         )
 
-        return retrieved
+        return retrieved[:top_k]

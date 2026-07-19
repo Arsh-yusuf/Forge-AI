@@ -58,22 +58,15 @@ class GraphService:
             edge_key = (src, rel, tgt)
             edge_counter[edge_key] += 1
 
-        # Finalise nodes
-        final_nodes = []
-        for node in node_map.values():
-            node["documents"] = sorted(list(node["documents"]))
-            final_nodes.append(node)
-
-        final_nodes.sort(key=lambda n: n["count"], reverse=True)
-
-        # Build edges (top 60 by weight)
+        # Build edges (top 150 by weight)
         sorted_edges = sorted(
             edge_counter.items(),
             key=lambda x: x[1],
             reverse=True,
-        )[:60]
+        )[:150]
 
         final_edges = []
+        active_node_ids = set()
         for (src, rel, tgt), weight in sorted_edges:
             final_edges.append(
                 {
@@ -84,6 +77,17 @@ class GraphService:
                     "weight": weight,
                 }
             )
+            active_node_ids.add(src)
+            active_node_ids.add(tgt)
+
+        # Finalise nodes (only keep nodes that are part of the active edges)
+        final_nodes = []
+        for node in node_map.values():
+            if node["id"] in active_node_ids:
+                node["documents"] = sorted(list(node["documents"]))
+                final_nodes.append(node)
+
+        final_nodes.sort(key=lambda n: n["count"], reverse=True)
 
         return {"nodes": final_nodes, "edges": final_edges}
 
