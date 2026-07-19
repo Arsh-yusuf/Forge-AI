@@ -2,7 +2,7 @@ import os
 
 import fitz
 import pytesseract
-from PIL import Image, ImageOps
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageStat
 
 
 class OCRService:
@@ -13,7 +13,8 @@ class OCRService:
     - Automatic initialization
     - 300 DPI rendering
     - Grayscale conversion
-    - OCR optimization
+    - Image preprocessing (sharpening, contrast enhancement, binarization)
+    - Smart PSM selection based on page density
     """
 
     _initialized = False
@@ -32,6 +33,32 @@ class OCRService:
         cls._initialized = True
 
     @classmethod
+    def _preprocess(cls, image: Image.Image) -> Image.Image:
+
+        # Enhance contrast
+        enhancer = ImageEnhance.Contrast(image)
+        image = enhancer.enhance(2.0)
+
+        # Sharpen
+        image = image.filter(ImageFilter.SHARPEN)
+
+        # Binarize using adaptive threshold
+        image = image.point(lambda x: 0 if x < 160 else 255)
+
+        return image
+
+    @classmethod
+    def _select_psm(cls, image: Image.Image) -> int:
+
+        stat = ImageStat.Stat(image)
+        avg_brightness = stat.mean[0]
+
+        # Very bright pages (low ink density) are likely diagrams/P&IDs
+        # Use PSM 11 (sparse text) for diagrams
+        # Use PSM 6 (uniform block) for regular documents
+        return 11 if avg_brightness > 240 else 6
+
+    @classmethod
     def extract_text(
         cls,
         page: fitz.Page,
@@ -39,7 +66,6 @@ class OCRService:
 
         cls.initialize()
 
-        # Render at approximately 300 DPI
         matrix = fitz.Matrix(4, 4)
 
         pix = page.get_pixmap(
@@ -53,14 +79,16 @@ class OCRService:
             pix.samples,
         )
 
-        # Convert to grayscale
         image = ImageOps.grayscale(image)
 
-        # OCR configuration
+        image = cls._preprocess(image)
+
+        psm = cls._select_psm(image)
+
         config = (
-            "--oem 3 "
-            "--psm 6 "
-            "-l eng"
+            f"--oem 3 "
+            f"--psm {psm} "
+            f"-l eng"
         )
 
         text = pytesseract.image_to_string(

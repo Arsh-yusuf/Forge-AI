@@ -2,6 +2,9 @@ import os
 from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
+
+from PIL import Image
+
 from app.services.parser_service import ParserService
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -11,6 +14,8 @@ from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 from app.models.user import User
 from app.services.graph_extractor import GraphExtractorService
+
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 
 
 class UploadService:
@@ -23,7 +28,6 @@ class UploadService:
         current_user: User,
     ):
 
-        # Create folder based on year/month
         today = datetime.utcnow()
 
         folder = Path(
@@ -32,18 +36,26 @@ class UploadService:
 
         folder.mkdir(parents=True, exist_ok=True)
 
-        # Generate unique filename
-        extension = Path(file.filename).suffix
+        extension = Path(file.filename).suffix.lower()
 
         stored_filename = f"{uuid4()}{extension}"
 
         file_path = folder / stored_filename
 
-        # Save file
         with open(file_path, "wb") as f:
             f.write(file.file.read())
 
-        # Auto-generate title
+        # Convert image uploads to PDF for downstream parsing
+        if extension in IMAGE_EXTENSIONS:
+            img = Image.open(file_path)
+            img = img.convert("RGB")
+            pdf_path = file_path.with_suffix(".pdf")
+            img.save(pdf_path, "PDF", resolution=300)
+            # Remove original image and update references
+            os.remove(file_path)
+            file_path = pdf_path
+            stored_filename = pdf_path.name
+
         title = Path(file.filename).stem.replace("_", " ").title()
 
         document = Document(
@@ -65,7 +77,6 @@ class UploadService:
             document
         )
 
-        # Fetch the persisted chunks and run LLM graph extraction
         chunks = (
             db.query(DocumentChunk)
             .filter(DocumentChunk.document_id == document.id)

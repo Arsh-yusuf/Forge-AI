@@ -16,6 +16,7 @@ import {
     MessageSquare,
     Network,
     ShieldAlert,
+    Wrench,
     LogOut
 } from "lucide-react";
 
@@ -48,6 +49,11 @@ const menu = [
         text: "Compliance Audit",
         icon: <ShieldAlert size={20} />,
         path: "/compliance"
+    },
+    {
+        text: "Maintenance & RCA",
+        icon: <Wrench size={20} />,
+        path: "/maintenance"
     }
 ];
 

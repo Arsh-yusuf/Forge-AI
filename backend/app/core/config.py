@@ -33,7 +33,8 @@ class Settings(BaseSettings):
     TESSERACT_PATH: str=""
     OPENROUTER_API_KEY: str
     OPENROUTER_BASE_URL: str 
-    OPENROUTER_MODEL: str 
+    OPENROUTER_MODEL: str
+    VISION_MODEL: str = "google/gemini-flash-1.5" 
 
 
 @lru_cache

@@ -63,7 +63,7 @@ export default function Documents() {
 
     async function handleUpload() {
         if (!selectedFile) {
-            setToast({ open: true, message: "Please choose a PDF first.", severity: "error" });
+            setToast({ open: true, message: "Please choose a file first.", severity: "error" });
             return;
         }
 
@@ -172,11 +172,11 @@ export default function Documents() {
                             }
                         }}
                     >
-                        {selectedFile ? "Change PDF File" : "Choose PDF File"}
+                        {selectedFile ? "Change File" : "Choose File (PDF / Image)"}
                         <input
                             hidden
                             type="file"
-                            accept=".pdf"
+                            accept=".pdf,.png,.jpg,.jpeg"
                             disabled={ingesting}
                             onChange={(e) => {
                                 if (e.target.files && e.target.files.length > 0) {

@@ -10,6 +10,7 @@ import Documents from "./pages/Documents";
 import Chat from "./pages/Chat";
 import KnowledgeGraph from "./pages/KnowledgeGraph";
 import Compliance from "./pages/Compliance";
+import Maintenance from "./pages/Maintenance";
 
 function Placeholder({ title }: { title: string }) {
     return <h1>{title}</h1>;
@@ -26,6 +27,7 @@ export default function App() {
                 <Route path="/settings" element={<Placeholder title="Settings" />} />
                 <Route path="/graph" element={<KnowledgeGraph />} />
                 <Route path="/compliance" element={<Compliance />} />
+                <Route path="/maintenance" element={<Maintenance />} />
             </Routes>
         </BrowserRouter>
     );
