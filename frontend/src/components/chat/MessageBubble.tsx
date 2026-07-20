@@ -3,6 +3,7 @@ import {
     Paper,
     Typography,
     Avatar,
+    Chip,
 } from "@mui/material";
 
 import ReactMarkdown from "react-markdown";
@@ -12,20 +13,31 @@ import SourcePanel from "./SourcePanel";
 import type {
     Source,
 } from "../../types/chat";
-import { User, Cpu } from "lucide-react";
+import { User, Cpu, Zap } from "lucide-react";
 
 interface Props {
     role: "user" | "assistant";
     content: string;
     sources?: Source[];
+    responseTimeMs?: number;
+    searchStrategy?: string;
+    entitiesExtracted?: string[];
 }
 
 export default function MessageBubble({
     role,
     content,
     sources,
+    responseTimeMs,
+    searchStrategy,
+    entitiesExtracted,
 }: Props) {
     const isUser = role === "user";
+
+    function formatTime(ms: number): string {
+        if (ms < 1000) return `${ms}ms`;
+        return `${(ms / 1000).toFixed(1)}s`;
+    }
 
     return (
         <Box
@@ -93,9 +105,39 @@ export default function MessageBubble({
                 </Typography>
 
                 {!isUser && (
-                    <SourcePanel
-                        sources={sources}
-                    />
+                    <>
+                        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.5, mt: 1 }}>
+                            {responseTimeMs != null && (
+                                <Chip
+                                    icon={<Zap size={14} />}
+                                    label={formatTime(responseTimeMs)}
+                                    size="small"
+                                    sx={{
+                                        color: "#fbbf24",
+                                        bgcolor: "rgba(251, 191, 36, 0.1)",
+                                        border: "1px solid rgba(251, 191, 36, 0.2)",
+                                        height: 24,
+                                        "& .MuiChip-icon": { ml: 0.5 },
+                                        "& .MuiChip-label": { px: 0.75, fontSize: "0.75rem", fontWeight: 600 },
+                                    }}
+                                />
+                            )}
+                            {searchStrategy === "multi_entity" && entitiesExtracted && entitiesExtracted.length > 0 && (
+                                <Chip
+                                    label={`Multi-entity · ${entitiesExtracted.length} sub-queries`}
+                                    size="small"
+                                    sx={{
+                                        color: "#a855f7",
+                                        bgcolor: "rgba(168, 85, 247, 0.1)",
+                                        border: "1px solid rgba(168, 85, 247, 0.2)",
+                                        height: 24,
+                                        "& .MuiChip-label": { px: 0.75, fontSize: "0.75rem", fontWeight: 600 },
+                                    }}
+                                />
+                            )}
+                        </Box>
+                        <SourcePanel sources={sources} />
+                    </>
                 )}
             </Paper>
 

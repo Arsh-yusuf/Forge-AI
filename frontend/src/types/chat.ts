@@ -6,6 +6,12 @@ export interface Message {
 
     sources?: Source[];
 
+    response_time_ms?: number;
+
+    search_strategy?: string;
+
+    entities_extracted?: string[];
+
 }
 
 export interface Source {
@@ -27,6 +33,12 @@ export interface ChatResponse {
     answer: string;
 
     sources: Source[];
+
+    response_time_ms?: number;
+
+    search_strategy?: string;
+
+    entities_extracted?: string[];
 
 }
 

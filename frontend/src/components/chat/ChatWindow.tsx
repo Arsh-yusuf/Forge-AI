@@ -78,6 +78,9 @@ export default function ChatWindow({
                         role={message.role}
                         content={message.content}
                         sources={message.sources}
+                        responseTimeMs={message.response_time_ms}
+                        searchStrategy={message.search_strategy}
+                        entitiesExtracted={message.entities_extracted}
                     />
                 ))
             )}

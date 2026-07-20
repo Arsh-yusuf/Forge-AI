@@ -1,4 +1,5 @@
 import json
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from sqlalchemy.orm import Session
@@ -48,7 +49,7 @@ class ChatService:
             return []
 
     @staticmethod
-    def _multi_entity_search(question: str, search_query: str) -> list[dict]:
+    def _multi_entity_search(question: str, search_query: str) -> tuple[list[dict], list[str]]:
 
         prelim = RetrieverService.search(search_query, top_k=5)
         prelim_text = "\n\n".join(c["text"] for c in prelim)
@@ -59,7 +60,7 @@ class ChatService:
         print(f"Multi-entity query detected. Extracted entities: {entities}")
 
         if not entities:
-            return prelim
+            return prelim, []
 
         all_chunks = list(prelim)
 
@@ -93,7 +94,7 @@ class ChatService:
 
         unique.sort(key=lambda x: x["score"], reverse=True)
 
-        return unique
+        return unique, entities
 
     @staticmethod
     def chat(
@@ -101,6 +102,8 @@ class ChatService:
         question: str,
         session_id: int | None,
     ):
+
+        start_time = time.perf_counter()
 
         if session_id is None:
 
@@ -133,14 +136,17 @@ class ChatService:
 
         is_multi = ChatService._classify_query(question)
 
+        entities_extracted = []
         if is_multi:
             print(f"[MULTI-ENTITY] Routing to expanded search")
-            chunks = ChatService._multi_entity_search(question, search_query)
+            chunks, entities_extracted = ChatService._multi_entity_search(question, search_query)
+            search_strategy = "multi_entity"
         else:
             chunks = RetrieverService.search(
                 search_query,
                 top_k=8,
             )
+            search_strategy = "single"
 
         prompt = build_prompt(
             question,
@@ -152,6 +158,8 @@ class ChatService:
             SYSTEM_PROMPT,
             prompt,
         )
+
+        elapsed_ms = int((time.perf_counter() - start_time) * 1000)
 
         source_list = [
             {
@@ -182,4 +190,7 @@ class ChatService:
             "session_id": session_id,
             "answer": answer,
             "sources": source_list,
+            "response_time_ms": elapsed_ms,
+            "search_strategy": search_strategy,
+            "entities_extracted": entities_extracted if entities_extracted else None,
         }

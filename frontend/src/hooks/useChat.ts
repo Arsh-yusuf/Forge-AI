@@ -75,6 +75,9 @@ export default function useChat() {
                     role: "assistant",
                     content: response.answer,
                     sources: response.sources ?? [],
+                    response_time_ms: response.response_time_ms,
+                    search_strategy: response.search_strategy,
+                    entities_extracted: response.entities_extracted,
                 }
             ]);
 

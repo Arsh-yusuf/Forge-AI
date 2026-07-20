@@ -26,3 +26,9 @@ class ChatResponse(BaseModel):
     answer: str
 
     sources: list[SourceResponse]
+
+    response_time_ms: int | None = None
+
+    search_strategy: str | None = None
+
+    entities_extracted: list[str] | None = None
