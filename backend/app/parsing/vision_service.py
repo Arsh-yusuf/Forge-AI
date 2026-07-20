@@ -2,8 +2,8 @@ import base64
 import io
 
 from PIL import Image
-from openai import OpenAI
 
+from app.llm.client import client
 from app.core.config import settings
 
 
@@ -17,11 +17,6 @@ class VisionService:
 
     @classmethod
     def extract_from_image(cls, image: Image.Image) -> str:
-        client = OpenAI(
-            api_key=settings.OPENROUTER_API_KEY,
-            base_url=settings.OPENROUTER_BASE_URL,
-        )
-
         base64_image = cls._encode_image(image)
 
         prompt = (

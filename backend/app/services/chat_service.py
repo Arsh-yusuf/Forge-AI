@@ -153,6 +153,16 @@ class ChatService:
             prompt,
         )
 
+        source_list = [
+            {
+                "document_name": chunk["document_name"],
+                "page_number": chunk["page_number"],
+                "section": chunk["section"],
+                "score": round(chunk["score"], 4),
+            }
+            for chunk in chunks
+        ]
+
         ConversationService.add_message(
             db,
             session_id,
@@ -165,27 +175,11 @@ class ChatService:
             session_id,
             "assistant",
             answer,
-            sources=[
-                {
-                    "document_name": chunk["document_name"],
-                    "page_number": chunk["page_number"],
-                    "section": chunk["section"],
-                    "score": round(chunk["score"], 4),
-                }
-                for chunk in chunks
-            ],
+            sources=source_list,
         )
 
         return {
             "session_id": session_id,
             "answer": answer,
-            "sources": [
-                {
-                    "document_name": chunk["document_name"],
-                    "page_number": chunk["page_number"],
-                    "section": chunk["section"],
-                    "score": chunk["score"],
-                }
-                for chunk in chunks
-            ],
+            "sources": source_list,
         }
