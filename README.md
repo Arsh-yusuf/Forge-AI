@@ -23,18 +23,20 @@ ForgeAI addresses these challenges by converting documents into a searchable kno
 
 ## Authentication
 
-- JWT Authentication
-- Secure Login
-- User Registration
+- JWT Authentication (access token + refresh token)
+- Secure Login / User Registration
+- Token refresh mechanism — automatic 401 recovery
 - Protected Routes
+- Session persistence across page reloads
 
 ---
 
 ## Document Management
 
-- Upload PDF documents
+- Upload PDF documents (plus PNG, JPEG — auto-converted to PDF)
+- File validation — size limit (50 MB), MIME type, extension checks
 - Store document metadata
-- Delete uploaded documents
+- Delete uploaded documents with confirmation dialog
 - List uploaded documents
 
 Supported document types include:
@@ -50,15 +52,29 @@ Supported document types include:
 
 ## Intelligent Document Processing
 
-Every uploaded PDF is automatically processed.
+Every uploaded document (PDF, PNG, JPEG) is automatically processed.
 
 Pipeline:
 
-PDF Upload
+Upload (PDF / PNG / JPEG)
 
 ↓
 
-Text Extraction (PyMuPDF)
+File Validation (size, MIME, extension)
+
+↓
+
+Image → PDF Conversion (for PNG/JPEG)
+
+↓
+
+Text Extraction — 3-Tier Fallback:
+
+  Tier 1: Native PDF text (PyMuPDF)
+
+  Tier 2: Improved Tesseract OCR (preprocessing + smart PSM)
+
+  Tier 3: LLM Vision Analysis (Gemini Flash via OpenRouter)
 
 ↓
 
@@ -66,11 +82,20 @@ Semantic Chunking
 
 ↓
 
-Embeddings
+Embeddings (BAAI/bge-small-en-v1.5)
 
 ↓
 
 Vector Database (ChromaDB)
+
+### OCR Improvements
+- Image preprocessing: contrast enhancement, sharpening, binarization
+- Smart PSM selection: detects sparse diagrams (P&IDs) vs dense documents
+
+### LLM Vision Analysis
+- Fallback for P&IDs, engineering drawings, and blueprints
+- Extracts equipment tags (T-101, P-201), process parameters, valve labels, line specs
+- Uses OpenRouter with Gemini Flash 1.5 Vision
 
 ---
 
@@ -88,11 +113,19 @@ Query Rewriter
 
 ↓
 
-Semantic Search
+Multi-Entity Classifier
 
-↓
+├── Standard Query → Semantic Search (top_k=8)
 
-Relevant Chunks
+└── Multi-Entity Query → Expanded Search:
+
+    ├── Preliminary vector search (top_k=5)
+
+    ├── LLM extracts entity list (e.g., incidents, equipment tags)
+
+    ├── Parallel sub-queries: each entity + question (top_k=2)
+
+    └── Merged, deduplicated context
 
 ↓
 
@@ -106,6 +139,9 @@ OpenRouter LLM
 
 Source-backed Answer
 
+### Multi-Entity Expansion
+Automatically detects questions like *"List all equipment tags"* or *"Summarize all incidents"* and expands retrieval to cover each entity individually before answering.
+
 ---
 
 ## AI Chat Assistant
@@ -117,6 +153,7 @@ Supports:
 - Conversation memory
 - Follow-up questions
 - Engineering knowledge retrieval
+- **Multi-Entity Expansion** — automatically expands global/comparative queries into targeted sub-searches
 
 Example:
 
@@ -230,12 +267,15 @@ Features:
 
 ## AI Stack
 
-- OpenRouter
+- OpenRouter (chat + vision models)
+- Gemini Flash 1.5 Vision (P&ID analysis)
 - BAAI/bge-small-en-v1.5
 - Sentence Transformers
 - ChromaDB
 - spaCy
 - PyMuPDF
+- Tesseract OCR
+- Pillow (image processing)
 
 ---
 
@@ -251,52 +291,39 @@ Features:
 ```
 forge-ai/
 
-│
-
 ├── backend/
-
 │   ├── app/
-
-│   │   ├── api/
-
-│   │   ├── database/
-
-│   │   ├── llm/
-
-│   │   ├── models/
-
-│   │   ├── routers/
-
-│   │   ├── schemas/
-
-│   │   ├── services/
-
-│   │   ├── utils/
-
+│   │   ├── api/v1/            (auth, documents, chat, graph, ...)
+│   │   ├── core/              (config, security, constants)
+│   │   ├── database/          (session, base, init_db)
+│   │   ├── embeddings/        (embedder)
+│   │   ├── llm/               (client, prompts, prompt_builder)
+│   │   ├── models/            (SQLAlchemy models)
+│   │   ├── parsing/           (ocr_service, vision_service, parser)
+│   │   ├── schemas/           (Pydantic schemas)
+│   │   ├── services/          (chat, upload, retriever, ...)
+│   │   ├── utils/             (text_chunker, nlp)
+│   │   ├── vectorstore/       (chroma_client)
+│   │   ├── seeds/             (seed.py)
 │   │   └── main.py
-
 │   │
-
-│   └── requirements.txt
-
+│   ├── requirements.txt
+│   └── .env
 │
-
 ├── frontend/
-
 │   ├── src/
-
-│   │   ├── api/
-
-│   │   ├── components/
-
-│   │   ├── pages/
-
-│   │   ├── layouts/
-
+│   │   ├── api/               (api.ts, auth.ts, documents.ts)
+│   │   ├── components/        (chat, dashboard, documents, graph, ...)
+│   │   ├── context/           (AuthContext)
+│   │   ├── pages/             (Login, Dashboard, Documents, Chat, ...)
+│   │   ├── hooks/
+│   │   ├── types/
+│   │   ├── theme/
 │   │   └── App.tsx
-
+│   │
+│   ├── package.json
+│   └── vite.config.ts
 │
-
 └── README.md
 ```
 
@@ -357,13 +384,23 @@ Create a `.env` file inside the backend directory.
 ```env
 DATABASE_URL=postgresql://username:password@localhost:5432/forgeai
 
-SECRET_KEY=your_secret_key
+JWT_SECRET_KEY=your_secret_key
 
-ALGORITHM=HS256
+JWT_ALGORITHM=HS256
 
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 
+REFRESH_TOKEN_EXPIRE_DAYS=7
+
 OPENROUTER_API_KEY=your_api_key
+
+OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+
+OPENROUTER_MODEL=deepseek/deepseek-chat-v3
+
+VISION_MODEL=google/gemini-flash-1.5
+
+TESSERACT_PATH=C:\Program Files\Tesseract-OCR\tesseract.exe
 ```
 
 ---
@@ -376,6 +413,8 @@ Authentication
 POST /auth/register
 
 POST /auth/login
+
+POST /auth/refresh
 ```
 
 Documents
@@ -472,7 +511,53 @@ Implemented an interactive Knowledge Graph generated from uploaded documents wit
 
 ---
 
-## 5. Session Management
+## 5. P&ID & Engineering Drawing Extraction
+
+Challenge
+
+Standard OCR fails on engineering P&ID diagrams — sparse labels, equipment tags (T-101), and technical annotations are misread or missed entirely.
+
+Solution
+
+Added a 3-tier extraction pipeline:
+1. Native PDF text extraction (fast path)
+2. Improved Tesseract OCR with image preprocessing (contrast, sharpening, binarization) and smart PSM selection (PSM 11 for sparse diagrams, PSM 6 for dense docs)
+3. LLM Vision fallback via Gemini Flash 1.5 that extracts equipment tags, process parameters, valve labels, and line specs
+
+---
+
+## 6. Multi-Entity Query Expansion
+
+Challenge
+
+Questions like *"List all equipment tags"* or *"Summarize all incidents"* require retrieving information about multiple distinct entities, which a single vector search may miss.
+
+Solution
+
+Implemented a Multi-Entity RAG Router that:
+1. Classifies the query as multi-entity using a fast LLM call
+2. Runs a preliminary vector search to identify candidate entities
+3. Extracts entity names via LLM
+4. Launches parallel sub-queries for each entity (capped at 10)
+5. Merges and deduplicates all chunks before building the final prompt
+
+---
+
+## 7. Token Expiry & Seamless Refresh
+
+Challenge
+
+Users returning after an idle period received 401 errors, breaking the experience.
+
+Solution
+
+Implemented a refresh token system:
+- Backend: `POST /auth/refresh` issues new access + refresh token pairs
+- Frontend: Axios response interceptor catches 401s, automatically refreshes, and replays queued requests — all transparent to the user
+
+---
+
+## 8. Session Management
 
 Challenge
 
@@ -485,24 +570,28 @@ Implemented persistent chat sessions with automatic session titles and conversat
 
 # Future Enhancements
 
-- OCR support for scanned documents
-- Compliance Intelligence Agent
 - Predictive Maintenance Agent
 - Multi-document comparison
 - Neo4j Graph Database integration
 - Multi-Agent AI workflows
 - Cloud deployment with persistent vector database
+- Role-based access control (RBAC)
+- Rate limiting
 
 # Key Innovations
 
 ForgeAI combines multiple AI techniques into a unified platform.
 
-- Retrieval-Augmented Generation (RAG)
+- Retrieval-Augmented Generation (RAG) with Multi-Entity Expansion
 - Semantic Search
 - Conversation Memory
 - Explainable AI with source attribution
 - Interactive Knowledge Graph
 - Industrial Document Intelligence
+- P&ID / Engineering Drawing Vision Analysis
+- 3-Tier OCR Pipeline (text → Tesseract → LLM Vision)
+- Automatic Token Refresh
+- Image File Upload Support (PNG/JPEG)
 
 Unlike traditional document search systems, ForgeAI enables engineers to ask natural language questions and receive context-aware, source-backed responses within seconds.
 
